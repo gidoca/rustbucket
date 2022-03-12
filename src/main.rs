@@ -10,6 +10,7 @@ struct State {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
+    bg_color: wgpu::Color,
 }
 
 impl State {
@@ -51,12 +52,20 @@ impl State {
         };
         surface.configure(&device, &config);
 
+        let bg_color = wgpu::Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        };
+
         Self {
             surface,
             device,
             queue,
             config,
             size,
+            bg_color,
         }
     }
 
@@ -70,7 +79,15 @@ impl State {
     }
 
     fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        match event {
+            WindowEvent::CursorMoved{position, ..} => {
+                self.bg_color.r = position.x / self.size.width as f64;
+                self.bg_color.g = position.y / self.size.height as f64;
+                self.bg_color.b = 1.0 - self.bg_color.r - self.bg_color.g;
+                true
+            }
+            _ => false,
+        }
     }
 
     fn update(&mut self) {}
@@ -92,12 +109,7 @@ impl State {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self.bg_color),
                         store: true,
                     },
                 }],
